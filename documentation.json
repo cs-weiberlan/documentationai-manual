@@ -1,73 +1,90 @@
 {
-  "name": "Starter Kit",
+  "name": "API Conta Simples",
+  "initialRoute": "index",
   "colors": {
     "light": {
-      "brand": "#F97316"
+      "brand": "#224E42",
+      "heading": "#1a1a1a",
+      "text": "#374151"
     },
     "dark": {
-      "brand": "#FDBA74"
+      "brand": "#82C9B6",
+      "heading": "#f2f2f2",
+      "text": "#c1c1c1"
     }
   },
   "navigation": {
     "tabs": [
       {
-        "tab": "Documentation",
+        "tab": "Guides",
         "icon": "book",
         "groups": [
           {
-            "group": "Start Here",
-            "icon": "rocket",
+            "group": "Início",
+            "icon": "home",
             "pages": [
               {
-                "title": "Introduction",
-                "path": "introduction",
-                "icon": "home"
-              },
-              {
-                "title": "Quickstart",
-                "path": "quickstart",
-                "icon": "zap"
-              },
-              {
-                "title": "Components",
-                "path": "components",
-                "icon": "code"
+                "title": "API Conta Simples",
+                "path": "index",
+                "icon": "star"
               }
             ]
           },
           {
-            "group": "Components",
-            "icon": "layers",
+            "group": "Comece Aqui",
+            "icon": "rocket",
             "pages": [
               {
-                "title": "Images",
-                "path": "components/images",
-                "icon": "image"
+                "title": "Quickstart",
+                "path": "comece-aqui/quickstart",
+                "icon": "zap"
               },
               {
-                "title": "Cards",
-                "path": "components/cards",
-                "icon": "square"
+                "title": "Autenticação",
+                "path": "comece-aqui/autenticacao",
+                "icon": "lock"
               },
               {
-                "title": "Code",
-                "path": "components/code",
-                "icon": "code"
+                "title": "Ambientes",
+                "path": "comece-aqui/ambientes",
+                "icon": "server"
+              }
+            ]
+          },
+          {
+            "group": "Integração",
+            "icon": "plug",
+            "pages": [
+              {
+                "title": "Fluxo de Integração",
+                "path": "guias/fluxo-integracao",
+                "icon": "git-branch"
               },
               {
-                "title": "Callouts",
-                "path": "components/callouts",
-                "icon": "message-square"
+                "title": "Boas Práticas",
+                "path": "guias/boas-praticas",
+                "icon": "shield"
+              }
+            ]
+          },
+          {
+            "group": "Referência",
+            "icon": "book-open",
+            "pages": [
+              {
+                "title": "Dicionário de Dados",
+                "path": "referencia/dicionario-dados",
+                "icon": "database"
               },
               {
-                "title": "Steps",
-                "path": "components/steps",
-                "icon": "list-ordered"
+                "title": "Erros Comuns",
+                "path": "operacao/erros-comuns",
+                "icon": "alert-triangle"
               },
               {
-                "title": "Tabs",
-                "path": "components/tabs",
-                "icon": "columns"
+                "title": "Suporte",
+                "path": "operacao/suporte",
+                "icon": "headphones"
               }
             ]
           }
@@ -78,61 +95,70 @@
         "icon": "code",
         "groups": [
           {
-            "group": "Overview",
-            "icon": "file-text",
+            "group": "Visão Geral",
+            "icon": "info",
             "pages": [
               {
-                "title": "Authentication",
-                "path": "authentication",
-                "icon": "lock"
+                "title": "Introdução",
+                "path": "api-reference/introducao",
+                "icon": "book-open"
               }
             ]
           },
           {
-            "group": "Sample Endpoints",
-            "openapi": "openapi.yaml"
+            "group": "Endpoints",
+            "icon": "terminal",
+            "openapi": "api-reference/openapi.json",
+            "pages": []
           }
         ]
       },
       {
-        "tab": "Help Center",
-        "icon": "help-circle",
-        "pages": [
+        "tab": "Collections",
+        "icon": "folder",
+        "groups": [
           {
-            "title": "Help Center",
-            "path": "help-center",
-            "icon": "home"
-          },
-          {
-            "group": "FAQs",
-            "icon": "help-circle",
-            "expandable": false,
+            "group": "Collections",
+            "icon": "download",
             "pages": [
               {
-                "title": "Documentation Source",
-                "path": "help-center/faq/getting-started"
+                "title": "Postman Collection",
+                "path": "collections/index",
+                "icon": "archive"
               }
             ]
-          },
+          }
+        ]
+      },
+      {
+        "tab": "MCP",
+        "icon": "bot",
+        "groups": [
           {
-            "group": "Troubleshooting",
-            "icon": "alert-triangle",
-            "expandable": false,
+            "group": "MCP",
+            "icon": "cpu",
             "pages": [
               {
-                "title": "Page Missing in Sidebar",
-                "path": "help-center/troubleshooting/install-error"
-              }
-            ]
-          },
-          {
-            "group": "Guides",
-            "icon": "book-open",
-            "expandable": false,
-            "pages": [
+                "title": "Model Context Protocol",
+                "path": "mcp/index",
+                "icon": "bot"
+              },
               {
-                "title": "Create Your First Page",
-                "path": "help-center/guides/setup-project"
+                "group": "MCP Servers",
+                "icon": "server",
+                "expandable": true,
+                "pages": [
+                  {
+                    "title": "Developer MCP",
+                    "path": "mcp/developer-mcp",
+                    "icon": "code"
+                  },
+                  {
+                    "title": "Conta Simples MCP",
+                    "path": "mcp/conta-simples-mcp",
+                    "icon": "shield"
+                  }
+                ]
               }
             ]
           }
@@ -141,14 +167,37 @@
       {
         "tab": "Changelog",
         "icon": "clock",
-        "pages": [
+        "groups": [
           {
-            "title": "Changelog",
-            "path": "changelog",
-            "icon": "history"
+            "group": "Changelog",
+            "icon": "history",
+            "pages": [
+              {
+                "title": "Changelog",
+                "path": "operacao/changelog",
+                "icon": "list"
+              },
+              {
+                "title": "Convenções",
+                "path": "operacao/como-funciona-changelog",
+                "icon": "info"
+              }
+            ]
           }
         ]
       }
     ]
-  }
+  },
+  "logo-light": "https://blob-cdn.documentation.ai/org-f8ce720a-109c-4c29-a930-9506286887d6/doc-8203420c-dfb0-4c3a-b9c4-a547d68e041b/1771989104130-dtqlv4gsduk-light.svg?q=85&fm=auto&auto=compress%2Cformat",
+  "logo-dark": "https://blob-cdn.documentation.ai/org-f8ce720a-109c-4c29-a930-9506286887d6/doc-8203420c-dfb0-4c3a-b9c4-a547d68e041b/1771986511470-1d9y3rs8rsw-dark.svg?q=85&fm=auto&auto=compress%2Cformat",
+  "template": "classic",
+  "navbar": {
+    "actions": {
+      "primary": {
+        "title": "Opções",
+        "link": ""
+      }
+    }
+  },
+  "favicon": "https://blob-cdn.documentation.ai/org-48ad0685-958a-4fcc-a94e-ffa44f0fbdd2/doc-79a4cd37-55e1-4e0b-bd2e-12b3419767db/1773780837532-9x25n3b38qh-favicon.png?q=85&fm=auto&auto=compress%2Cformat"
 }
