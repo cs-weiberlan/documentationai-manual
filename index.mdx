@@ -1,0 +1,112 @@
+---
+title: "API Conta Simples"
+description: "Portal de desenvolvedores para integração com a Conta Simples"
+---
+
+## O que é a API Conta Simples
+
+A **API Conta Simples** é a interface de integração da Conta Simples. Através dela, parceiros e sistemas externos se conectam à nossa plataforma de forma segura, padronizada e escalável.
+
+Com a API Conta Simples você pode:
+
+- **Consultar transações** de cartão de crédito e conciliar com seus sistemas
+- **Gerenciar cartões** corporativos — listar, bloquear e desbloquear cartões físicos e virtuais
+- **Consultar usuários** da empresa — listar usuários com filtro por e-mail e paginação
+- **Baixar comprovantes** e documentos anexados às transações
+- **Automatizar fluxos financeiros** do seu negócio
+
+## Para quem é
+
+<Columns cols="2">
+  <Card title="Empresas e Parceiros" icon="handshake" href="#" horizontal={false}>
+    Empresas que precisam emitir cartões corporativos ou integrar fluxos financeiros.
+  </Card>
+  <Card title="Desenvolvedores" icon="code" href="#" horizontal={false}>
+    Times técnicos responsáveis por construir integrações com a Conta Simples.
+  </Card>
+  <Card title="Fintechs e Plataformas" icon="building" href="#" horizontal={false}>
+    Plataformas que integram pagamentos, cartões e gestão financeira.
+  </Card>
+  <Card title="Operações e Compliance" icon="shield" href="#" horizontal={false}>
+    Equipes que precisam garantir conformidade e monitoramento.
+  </Card>
+</Columns>
+
+---
+
+## Por onde começar
+
+Siga esta jornada recomendada para integrar com a API Conta Simples:
+
+<Steps>
+  <Step title="Quickstart — sua primeira chamada" titleType="p">
+    Configure credenciais, obtenha um token e faça sua primeira consulta de transações em 5 minutos.
+
+    [Começar agora →](/comece-aqui/quickstart)
+  </Step>
+  <Step title="Entenda o fluxo completo" titleType="p">
+    Leia o fluxo de integração recomendado com o passo a passo de cada etapa, do Sandbox à Produção.
+
+    [Ver fluxo de integração →](/guias/fluxo-integracao)
+  </Step>
+  <Step title="Aplique as boas práticas" titleType="p">
+    Padrões de paginação, retry e tratamento de erros para uma integração robusta.
+
+    [Ver boas práticas →](/guias/boas-praticas)
+  </Step>
+  <Step title="Consulte a API Reference" titleType="p">
+    Use a referência técnica dos endpoints para detalhes de parâmetros, schemas e exemplos.
+
+    [Ver API Reference →](/api-reference/introducao)
+  </Step>
+</Steps>
+
+---
+
+## Princípios da API
+
+<ExpandableGroup>
+  <Expandable title="RESTful e previsível" default-open="false">
+    Seguimos convenções REST padrão. Recursos são substantivos, verbos HTTP indicam ações, e respostas seguem estruturas consistentes.
+  </Expandable>
+  <Expandable title="Segurança em primeiro lugar" default-open="false">
+    Autenticação via tokens, comunicação exclusiva por HTTPS, e controle granular de permissões por escopo.
+  </Expandable>
+  <Expandable title="Idempotência" default-open="false">
+    Operações críticas suportam chaves de idempotência para garantir que retentativas não causem duplicações.
+  </Expandable>
+  <Expandable title="Versionamento" default-open="false">
+    A API é versionada para garantir estabilidade. Mudanças breaking são comunicadas com antecedência e documentadas no changelog.
+  </Expandable>
+</ExpandableGroup>
+
+---
+
+## Acesso rápido
+
+<Columns cols="3">
+  <Card title="Quickstart" icon="rocket" href="/comece-aqui/quickstart" horizontal={false}>
+    Configure e faça sua primeira chamada em 5 min.
+  </Card>
+  <Card title="Autenticação" icon="lock" href="/comece-aqui/autenticacao" horizontal={false}>
+    OAuth 2.0 Client Credentials (api_key + api_secret via Basic) e renovação de token.
+  </Card>
+  <Card title="Fluxo de Integração" icon="git-branch" href="/guias/fluxo-integracao" horizontal={false}>
+    Passo a passo do Sandbox à Produção.
+  </Card>
+  <Card title="Boas Práticas" icon="shield" href="/guias/boas-praticas" horizontal={false}>
+    Paginação, retry e tratamento de erros.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/introducao" horizontal={false}>
+    Referência técnica dos endpoints.
+  </Card>
+  <Card title="Dicionário de Dados" icon="database" href="/referencia/dicionario-dados" horizontal={false}>
+    Entidades, campos e enumerações.
+  </Card>
+</Columns>
+
+---
+
+<Callout kind="info">
+**Dúvidas?** Consulte o [guia de suporte](/operacao/suporte) para saber como entrar em contato com o time técnico.
+</Callout>

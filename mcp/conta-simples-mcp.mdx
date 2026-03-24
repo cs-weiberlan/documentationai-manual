@@ -1,0 +1,250 @@
+---
+title: "Conta Simples MCP"
+description: "Enable AI agents to perform real operations on the Conta Simples platform"
+---
+
+## Overview
+
+The Conta Simples MCP server enables AI agents to interact directly with the Conta Simples platform. It exposes a curated set of tools that allow agents to query financial data, manage cards, and automate operational workflows — all through natural language conversations.
+
+<Callout kind="alert">
+  This MCP server performs **real operations** on your Conta Simples account. Actions taken by AI agents through this server are subject to your user permissions, rate limits, and audit requirements.
+</Callout>
+
+---
+
+## What you can do
+
+The Conta Simples MCP enables AI-powered workflows across key financial operations:
+
+<Columns cols="2">
+  <div>
+    ### Monthly closing & control
+    - "Which expenses are missing receipts this month?"
+    - "Are there any transactions outside our spending policy in the last 30 days?"
+    - "Compare total spend by category this week vs last week"
+  </div>
+  <div>
+    ### Reconciliation & accounting
+    - "Export all March expenses with invoices for my ERP"
+    - "Which transactions have not been categorized yet?"
+    - "Group travel expenses this month by user"
+  </div>
+</Columns>
+
+<Columns cols="2">
+  <div>
+    ### Cash flow & credit
+    - "What is my available balance right now?"
+    - "What is the projected spend until end of month based on history?"
+    - "Do I have any recurring payment that increased in value?"
+  </div>
+  <div>
+    ### Card & team management
+    - "Who has a blocked card?"
+    - "Which team members haven't used their card this month?"
+    - "Create a virtual card for cost center X with limit Y"
+    - "Block the card for user X"
+  </div>
+</Columns>
+
+---
+
+## Setup
+
+### Prerequisites
+
+Before setting up the Conta Simples MCP, you need:
+
+1. **A Conta Simples account** — An active user account with access to the [Internet Banking](https://ib.contasimples.com)
+2. **An MCP-compatible client** — Such as Claude Desktop, Cursor, or Windsurf
+
+<Tabs>
+  <Tab title="Cursor" icon="mouse-pointer">
+    Add the following to your MCP configuration in Cursor (Settings → Cursor Settings → MCP):
+
+    ```json
+    {
+      "mcpServers": {
+        "conta-simples": {
+          "command": "npx",
+          "args": ["-y", "@contasimples/mcp-server"]
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Claude Desktop" icon="bot">
+    Add the following to your `claude_desktop_config.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "conta-simples": {
+          "command": "npx",
+          "args": ["-y", "@contasimples/mcp-server"]
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Connecting your account
+
+On first use, the MCP server will open a browser window to the Conta Simples Internet Banking login page. Sign in with your user credentials and authorize the MCP to access your account.
+
+<Steps>
+  <Step title="Start the MCP server" icon="play" titleType="p">
+    Launch your MCP client. The Conta Simples MCP server will start automatically based on your configuration.
+  </Step>
+  <Step title="Sign in to Conta Simples" icon="log-in" titleType="p">
+    A browser window opens to the Conta Simples login page. Sign in with your personal credentials — the same ones you use to access the Internet Banking.
+  </Step>
+  <Step title="Authorize access" icon="shield-check" titleType="p">
+    Review the requested permissions and authorize the MCP server to act on your behalf. You can revoke this access at any time from the Internet Banking.
+  </Step>
+  <Step title="Ready to use" icon="circle-check" titleType="p">
+    Once authorized, the MCP server securely stores your session and handles token refresh automatically. You can start interacting with your AI assistant immediately.
+  </Step>
+</Steps>
+
+<Callout kind="tip">
+  Your authorization persists across sessions. You only need to sign in again if you revoke access or your session expires.
+</Callout>
+
+---
+
+## Available tools
+
+The Conta Simples MCP exposes the following tools, organized by domain:
+
+### Transactions
+
+| Tool | Description | Reads | Writes |
+|------|-------------|:-----:|:------:|
+| `list_card_transactions` | List and filter card transactions by date range, status, category, user, and more | ✅ | |
+| `list_banking_transactions` | List and filter banking transactions (PIX, TED, transfers) | ✅ | |
+
+### Users & suppliers
+
+| Tool | Description | Reads | Writes |
+|------|-------------|:-----:|:------:|
+| `list_users` | List company users with roles, status, and associated cards | ✅ | |
+| `list_suppliers` | List registered suppliers with transaction history | ✅ | |
+
+### Cards
+
+| Tool | Description | Reads | Writes |
+|------|-------------|:-----:|:------:|
+| `list_cards` | List all company cards with status, type, and responsible user | ✅ | |
+| `create_card` | Create a new virtual card with specified limit and cost center | | ✅ |
+| `block_card` | Block a specific card by ID or user | | ✅ |
+| `unblock_card` | Unblock a previously blocked card | | ✅ |
+
+### Balances & limits
+
+| Tool | Description | Reads | Writes |
+|------|-------------|:-----:|:------:|
+| `get_banking_balance` | Query the current available balance for the banking account | ✅ | |
+| `get_card_balance_limit` | Query balance and spending limits for card accounts | ✅ | |
+
+### Policies
+
+| Tool | Description | Reads | Writes |
+|------|-------------|:-----:|:------:|
+| `list_control_policies` | List active spending control policies and rules | ✅ | |
+
+---
+
+## Example workflows
+
+### Monthly expense review
+
+**You:** "Show me all card expenses over R$500 from last month that are missing receipts"
+
+The agent will:
+1. Call `list_card_transactions` with date filters and amount threshold
+2. Filter results for transactions without attachments
+3. Present a structured summary with totals and responsible users
+
+### Card management
+
+**You:** "Block all cards for users who spent more than R$10,000 this month"
+
+The agent will:
+1. Call `list_card_transactions` to calculate spend per user
+2. Identify users exceeding the threshold
+3. Call `block_card` for each matching card
+4. Report back with a summary of blocked cards
+
+### Cash flow analysis
+
+**You:** "What is my current balance and projected spend until end of month?"
+
+The agent will:
+1. Call `get_banking_balance` for the current available balance
+2. Call `list_banking_transactions` for historical data
+3. Calculate spending trends and provide a forecast
+
+---
+
+## Authentication & security
+
+The Conta Simples MCP uses OAuth 2.0 to authenticate your personal user account:
+
+1. On first use, a browser window opens for you to sign in to the Internet Banking
+2. After authorization, the MCP server receives a scoped access token
+3. Tokens are securely stored and automatically refreshed before expiration
+
+### Permissions
+
+The tools available to the MCP server depend on the scopes you authorize during login and your user role within the company:
+
+| Scope | Tools enabled |
+|-------|--------------|
+| `statements:read` | `list_card_transactions`, `list_banking_transactions` |
+| `cards:read` | `list_cards`, `get_card_balance_limit` |
+| `cards:write` | `create_card`, `block_card`, `unblock_card` |
+| `users:read` | `list_users` |
+| `accounts:read` | `get_banking_balance` |
+
+<Callout kind="info">
+  You can review and revoke MCP access at any time from your Internet Banking settings.
+</Callout>
+
+---
+
+## Rate limits
+
+The Conta Simples MCP enforces rate limits to ensure platform stability. When limits are exceeded, the agent will receive a `429 Too Many Requests` response and automatically retry with exponential backoff.
+
+---
+
+## Limitations
+
+- Financial operations (payments, transfers) are not yet available through MCP and are planned for future releases
+- The MCP server processes data in real-time and does not maintain local state between sessions
+
+---
+
+## Next steps
+
+<Columns cols="2">
+  <Card
+    title="Developer MCP"
+    icon="code"
+    href="/mcp/developer-mcp"
+    horizontal={false}
+  >
+    Get AI-powered help building your API integration.
+  </Card>
+  <Card
+    title="MCP Overview"
+    icon="layers"
+    href="/mcp"
+    horizontal={false}
+  >
+    Learn about all available MCP servers and how to choose the right one.
+  </Card>
+</Columns>

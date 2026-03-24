@@ -1,0 +1,341 @@
+---
+title: "Dicionário de Dados"
+description: "Descrição detalhada de todas as entidades, campos e enumerações da API"
+---
+
+## Visão geral
+
+Este dicionário documenta todas as entidades retornadas pela API, seus campos, tipos e valores possíveis. Use como referência ao integrar com a Conta Simples.
+
+<Columns cols="2">
+  <Card title="Entidades" icon="database" href="#entidades-principais" horizontal={false}>
+    Card, CardTransaction, Category, CostCenter, Attachment
+  </Card>
+  <Card title="Enumerações" icon="list" href="#enumerações" horizontal={false}>
+    Tipos de cartão, status, operações e tipos de transação
+  </Card>
+</Columns>
+
+---
+
+## Entidades principais
+
+### CardTransaction
+
+Representa uma transação realizada com cartão de crédito.
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `id` | string | Sim | Identificador único da transação |
+| `operation` | enum | Sim | Tipo de operação ([ver valores](#operation)) |
+| `transactionDate` | string | Sim | Data/hora da transação (ISO 8601) |
+| `status` | enum | Sim | Status da transação ([ver valores](#status)) |
+| `type` | enum | Sim | Tipo da transação ([ver valores](#type)) |
+| `merchant` | string | Sim | Nome do estabelecimento |
+| `amountBrl` | number | Sim | Valor em Reais (BRL) |
+| `exchangeRateUsd` | number | Sim | Taxa de câmbio USD (para transações internacionais) |
+| `isCanceled` | boolean | Sim | Indica se a transação foi cancelada |
+| `isConciled` | boolean | Sim | Indica se a transação foi conciliada |
+| `installment` | number | Sim | Número da parcela (1 para à vista) |
+| `card` | [Card](#card) | Sim | Dados do cartão utilizado |
+| `category` | [Category](#category) | Sim | Categoria da transação |
+| `costCenter` | [CostCenter](#costcenter) | Sim | Centro de custo associado |
+| `attachments` | array[[Attachment](#attachment)] | Sim | Comprovantes anexados |
+
+#### Exemplo
+
+```json
+{
+  "id": "txn_abc123",
+  "operation": "CASH_OUT",
+  "transactionDate": "2025-01-15T14:30:00.000Z",
+  "status": "PROCESSED",
+  "type": "PURCHASE",
+  "merchant": "UBER *TRIP",
+  "amountBrl": 45.90,
+  "exchangeRateUsd": 0,
+  "isCanceled": false,
+  "isConciled": true,
+  "installment": 1,
+  "card": {
+    "id": "card_xyz789",
+    "maskedNumber": "**** **** **** 1234",
+    "responsibleName": "João Silva",
+    "responsibleEmail": "joao@empresa.com",
+    "type": "VIRTUAL"
+  },
+  "category": {
+    "id": "cat_001",
+    "name": "Transporte"
+  },
+  "costCenter": {
+    "id": "cc_001",
+    "name": "Comercial"
+  },
+  "attachments": []
+}
+```
+
+---
+
+### Card
+
+Representa um cartão de crédito (físico ou virtual).
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `id` | string | Sim | Identificador único do cartão |
+| `maskedNumber` | string | Sim | Número do cartão mascarado (ex: `**** **** **** 1234`) |
+| `responsibleName` | string | Sim | Nome do responsável pelo cartão |
+| `responsibleEmail` | string | Sim | E-mail do responsável pelo cartão |
+| `type` | enum | Sim | Tipo do cartão ([ver valores](#cardtype)) |
+
+#### Exemplo
+
+```json
+{
+  "id": "card_xyz789",
+  "maskedNumber": "**** **** **** 1234",
+  "responsibleName": "Maria Santos",
+  "responsibleEmail": "maria@empresa.com",
+  "type": "PHYSICAL"
+}
+```
+
+---
+
+### Category
+
+Representa uma categoria de despesa para classificação de transações.
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `id` | string | Sim | Identificador único da categoria |
+| `name` | string | Sim | Nome da categoria |
+
+#### Exemplo
+
+```json
+{
+  "id": "cat_001",
+  "name": "Alimentação"
+}
+```
+
+---
+
+### CostCenter
+
+Representa um centro de custo para alocação contábil de despesas.
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `id` | string | Sim | Identificador único do centro de custo |
+| `name` | string | Sim | Nome do centro de custo |
+
+#### Exemplo
+
+```json
+{
+  "id": "cc_001",
+  "name": "Marketing"
+}
+```
+
+---
+
+### Attachment
+
+Representa um arquivo anexado a uma transação (comprovante, nota fiscal, etc.).
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `id` | string | Sim | Identificador único do anexo |
+| `name` | string | Sim | Nome do arquivo |
+| `_links` | object | Não | Links HATEOAS para acesso ao conteúdo |
+
+#### Exemplo
+
+```json
+{
+  "id": "att_001",
+  "name": "comprovante.pdf",
+  "_links": {
+    "content": {
+      "href": "/attachments/v1/content/att_001",
+      "rel": "GET"
+    }
+  }
+}
+```
+
+Para baixar o conteúdo do anexo, use o endpoint `GET /attachments/v1/content/{attachmentId}` documentado na [API Reference](/api-reference/introducao).
+
+---
+
+## Enumerações
+
+### operation
+
+Indica a direção do fluxo financeiro da transação.
+
+| Valor | Descrição |
+|-------|-----------|
+| `CASH_IN` | Entrada de valor (crédito, estorno) |
+| `CASH_OUT` | Saída de valor (compra, saque) |
+
+---
+
+### status
+
+Estado atual da transação no ciclo de processamento.
+
+| Valor | Descrição |
+|-------|-----------|
+| `PENDING` | Transação pendente de processamento |
+| `PROCESSED` | Transação processada/liquidada |
+| `CANCELED` | Transação cancelada |
+
+---
+
+### type
+
+Classificação detalhada do tipo de transação.
+
+| Valor | Descrição |
+|-------|-----------|
+| `PURCHASE` | Compra nacional |
+| `PURCHASE_INTERNATIONAL` | Compra internacional |
+| `PURCHASE_BNPL` | Compra parcelada (Buy Now Pay Later) |
+| `WITHDRAW` | Saque nacional |
+| `WITHDRAW_INTERNATIONAL` | Saque internacional |
+| `WITHDRAW_FUNDS` | Resgate de fundos |
+| `BALANCE_INQUIRY` | Consulta de saldo |
+| `PAYMENT_PLAN_INQUIRY` | Consulta de plano de pagamento |
+| `REFUND` | Estorno nacional |
+| `REFUND_INTERNATIONAL` | Estorno internacional |
+| `REFUND_CREDIT_ADJUSTMENT` | Ajuste de crédito (estorno) |
+| `REVERSAL_CREDIT_ADJUSTMENT` | Reversão de ajuste de crédito |
+| `REFUND_IOF` | Estorno de IOF |
+| `REFUND_PURCHASE_BNPL` | Estorno de compra parcelada |
+| `IOF` | Imposto sobre Operações Financeiras |
+| `LIMIT` | Ajuste de limite (débito) |
+| `LIMIT_CREDIT` | Ajuste de limite (crédito) |
+| `SUMMARY` | Resumo/consolidação |
+| `BILL_TARIFF` | Tarifa de fatura |
+| `REFUND_BILL_TARIFF` | Estorno de tarifa |
+| `INVOICE_PAYMENT` | Pagamento de fatura |
+
+---
+
+### card.type
+
+Tipo do cartão.
+
+| Valor | Descrição |
+|-------|-----------|
+| `VIRTUAL` | Cartão virtual (uso online) |
+| `PHYSICAL` | Cartão físico (plástico) |
+
+---
+
+## Objetos de request
+
+### CardsTransactionRequest
+
+Parâmetros para consulta de extrato de cartão.
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `startDate` | string | Sim | Data inicial do período (`YYYY-MM-DD`) |
+| `endDate` | string | Sim | Data final do período (`YYYY-MM-DD`) |
+| `limit` | integer | Sim | Quantidade de resultados (5-100) |
+| `nextPageStartKey` | string | Não | Cursor para paginação |
+
+<Callout kind="alert">
+O período consultado (`endDate` - `startDate`) não pode exceder **62 dias**.
+</Callout>
+
+#### Exemplo
+
+```json
+{
+  "startDate": "2025-01-01",
+  "endDate": "2025-01-31",
+  "limit": 50
+}
+```
+
+---
+
+## Objetos de response
+
+### CardsTransactionResponse
+
+Resposta da consulta de extrato com lista de transações.
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `transactions` | array[[CardTransaction](#cardtransaction)] | Lista de transações |
+| `nextPageStartKey` | string | Cursor para próxima página (se houver mais resultados) |
+
+#### Exemplo
+
+```json
+{
+  "transactions": [
+    {
+      "id": "txn_001",
+      "operation": "CASH_OUT",
+      "transactionDate": "2025-01-15T14:30:00.000Z",
+      "status": "PROCESSED",
+      "type": "PURCHASE",
+      "merchant": "RESTAURANTE XYZ",
+      "amountBrl": 89.90
+    }
+  ],
+  "nextPageStartKey": "eyJsYXN0SWQiOiJ0eG5fMDAxIn0="
+}
+```
+
+---
+
+## Regras globais
+
+### Datas e períodos
+
+- **Formato de entrada**: `YYYY-MM-DD` (ex: `2025-01-15`)
+- **Formato de saída**: ISO 8601 completo (ex: `2025-01-15T14:30:00.000Z`)
+- **Período máximo**: 62 dias por consulta
+- **Timezone**: UTC
+
+### Paginação
+
+- **Limite mínimo**: 5 itens
+- **Limite máximo**: 100 itens
+- **Cursor**: O campo `nextPageStartKey` é um token opaco — não tente decodificar ou modificar
+
+### Anexos e links
+
+- Anexos são retornados com links HATEOAS no campo `_links`
+- Use o endpoint `GET /attachments/v1/content/{attachmentId}` para baixar o conteúdo
+- Formatos suportados: `image/png`, `image/jpeg`, `application/pdf`
+
+---
+
+## Próximos passos
+
+<Columns cols="2">
+  <Card title="Boas Práticas" icon="shield" href="/guias/boas-praticas" horizontal={false}>
+    Paginação, retry e download de anexos.
+  </Card>
+  <Card title="Fluxo de Integração" icon="git-branch" href="/guias/fluxo-integracao" horizontal={false}>
+    Passo a passo do Sandbox à Produção.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/introducao" horizontal={false}>
+    Referência técnica dos endpoints.
+  </Card>
+  <Card title="Erros Comuns" icon="alert-triangle" href="/operacao/erros-comuns" horizontal={false}>
+    Diagnóstico e resolução de erros.
+  </Card>
+</Columns>

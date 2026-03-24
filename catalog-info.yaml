@@ -1,0 +1,11 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: "public-api-docs"
+  annotations:
+    github.com/project-slug: conta-simples/"public-api-docs"
+spec:
+  type: service
+  owner: integracoes
+  system: "apis-publicas"
+  lifecycle: production

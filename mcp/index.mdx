@@ -1,0 +1,77 @@
+---
+title: "Model Context Protocol (MCP)"
+description: "Connect AI agents and assistants to the Conta Simples platform through MCP servers"
+---
+
+## Overview
+
+Conta Simples offers two Model Context Protocol (MCP) servers that enable AI-powered tools and agents to interact with the platform. Whether you are building integrations with our API or automating financial operations, these servers provide structured, secure, and auditable access for AI agents.
+
+<Callout kind="info">
+  MCP (Model Context Protocol) is an open standard that allows AI models and agents to connect to external tools and data sources. It enables assistants like Claude, Cursor, and other MCP-compatible clients to perform actions and retrieve information programmatically.
+</Callout>
+
+---
+
+## Available MCP Servers
+
+<Columns cols="2">
+  <Card
+    title="Developer MCP"
+    icon="code"
+    href="/mcp/developer-mcp"
+    horizontal={false}
+  >
+    AI-powered assistant for developers integrating with the Conta Simples API. Query documentation, understand endpoints, generate code samples, and debug integrations — all from your IDE or AI assistant.
+  </Card>
+  <Card
+    title="Conta Simples MCP"
+    icon="bot"
+    href="/mcp/conta-simples-mcp"
+    horizontal={false}
+  >
+    Operational MCP server that enables AI agents to execute real actions on the Conta Simples platform — query transactions, manage cards, check balances, and automate financial workflows.
+  </Card>
+</Columns>
+
+---
+
+## Choosing the right MCP server
+
+| Feature | Developer MCP | Conta Simples MCP |
+|---------|--------------|-------------------|
+| **Purpose** | Documentation assistance | Platform operations |
+| **Data access** | Documentation & specs | Live financial data |
+| **Authentication** | None required | User login via OAuth 2.0 |
+| **Use cases** | Code generation, endpoint lookup, debugging | Transactions, cards, balances, reports |
+| **Target audience** | Developers & engineers | Finance teams, ops, admins |
+
+---
+
+## Getting started
+
+<Steps>
+  <Step title="Choose your MCP server" titleType="p">
+    Decide which server fits your needs. Use the **Developer MCP** if you are building or debugging an integration. Use the **Conta Simples MCP** if you want to query data or perform operations on the platform.
+  </Step>
+  <Step title="Set up your MCP client" titleType="p">
+    MCP servers work with compatible clients such as Claude Desktop, Cursor, Windsurf, and other tools that support the Model Context Protocol.
+  </Step>
+  <Step title="Configure and connect" titleType="p">
+    Follow the setup instructions for your chosen MCP server. The Developer MCP requires no authentication, while the Conta Simples MCP requires you to sign in with your Conta Simples account.
+  </Step>
+</Steps>
+
+---
+
+## Security and compliance
+
+- **OAuth 2.0** — the Conta Simples MCP authenticates through your personal user login
+- **Scoped access** — agents can only perform actions within your authorized permissions
+- **Audit trail** — all operations are logged and traceable
+- **Data isolation** — data is strictly isolated per company
+- **Rate limiting** — rate limits apply to ensure platform stability
+
+<Callout kind="alert">
+  The Conta Simples MCP operates under your personal user session. Never share your credentials or leave active sessions on shared machines.
+</Callout>

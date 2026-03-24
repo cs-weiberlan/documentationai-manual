@@ -1,0 +1,1052 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "API Conta Simples",
+    "version": "v1",
+    "description": "Referência técnica da API Conta Simples. Gerencie cartões corporativos, consulte extratos de cartão, faça download de anexos (comprovantes, notas fiscais e recibos) e consulte os usuários da empresa."
+  },
+  "servers": [
+    {
+      "url": "https://api-sandbox.contasimples.com",
+      "description": "Sandbox"
+    },
+    {
+      "url": "https://api.contasimples.com",
+      "description": "Produção"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Autenticação",
+      "description": "Endpoint para obtenção de token de acesso via OAuth 2.0 Client Credentials."
+    },
+    {
+      "name": "Cartões",
+      "description": "Endpoints para gestão de cartões corporativos (consulta, bloqueio e desbloqueio)."
+    },
+    {
+      "name": "Transações",
+      "description": "Endpoints para consulta de extratos e transações."
+    },
+    {
+      "name": "Anexos",
+      "description": "Endpoints para download de comprovantes e anexos de transações."
+    },
+    {
+      "name": "Usuários",
+      "description": "Endpoints para consulta de usuários da empresa."
+    }
+  ],
+  "paths": {
+    "/oauth/v1/access-token": {
+      "post": {
+        "tags": ["Autenticação"],
+        "summary": "Obter Token de Acesso",
+        "description": "Obtém um token de acesso (JWT) via OAuth 2.0 Client Credentials. As credenciais **api_key** e **api_secret** devem ser enviadas no header `Authorization: Basic`, com o valor em base64 da string `api_key:api_secret`.\n\nAs credenciais são gerenciadas pelo [Internet Banking da Conta Simples](https://ib.contasimples.com/integracoes/api/credenciais).\n\n**Importante:**\n- O token expira em **30 minutos** (`expires_in: 1800`).\n- Renove o token **antes** da expiração para evitar interrupções.\n- Use `Content-Type: application/x-www-form-urlencoded` no body (apenas `grant_type=client_credentials`).",
+        "operationId": "getAccessToken",
+        "security": [{ "basicAuth": [] }],
+        "requestBody": {
+          "description": "Body com o tipo de concessão OAuth 2.0. Credenciais vão no header Authorization: Basic (base64 de api_key:api_secret).",
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/OAuthTokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token de acesso gerado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthTokenResponse"
+                },
+                "example": {
+                  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+                  "token_type": "Bearer",
+                  "expires_in": 1800
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisição inválida. Verifique o `grant_type`, `Content-Type` e formato dos parâmetros."
+          },
+          "401": {
+            "description": "Credenciais inválidas. Verifique se a API Key e o API Secret estão corretos."
+          },
+          "500": {
+            "description": "Erro interno do servidor. Tente novamente com retry e backoff exponencial."
+          }
+        }
+      }
+    },
+    "/credit-cards/v1/cards": {
+      "get": {
+        "tags": ["Cartões"],
+        "summary": "Listar Cartões",
+        "description": "Retorna a lista paginada de cartões corporativos da empresa, com filtros opcionais por status, tipo, e-mail do responsável, nome do produto e últimos 4 dígitos.\n\n**Filtros disponíveis:**\n- `status`: ACTIVATED, BLOCKED, CANCELLED, INACTIVATED\n- `type`: PHYSICAL, VIRTUAL\n- `email`: e-mail do responsável pelo cartão\n- `productName`: nome do produto do cartão\n- `last4`: últimos 4 dígitos do número do cartão\n\nUse `nextPageStartKey` para navegar entre páginas (paginação por cursor).",
+        "operationId": "listCreditCards",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "description": "E-mail do responsável pelo cartão.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "responsavel-cartao@gmail.com"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Status do cartão.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["ACTIVATED", "BLOCKED", "CANCELLED", "INACTIVATED"]
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Tipo do cartão.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["PHYSICAL", "VIRTUAL"]
+            }
+          },
+          {
+            "name": "productName",
+            "in": "query",
+            "description": "Nome do produto do cartão.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Marketing Ads"
+          },
+          {
+            "name": "last4",
+            "in": "query",
+            "description": "Últimos 4 dígitos do número do cartão.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "4821"
+          },
+          {
+            "name": "nextPageStartKey",
+            "in": "query",
+            "description": "Token opaco de paginação retornado na resposta anterior. Use exatamente como recebido para obter a próxima página.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Número máximo de cartões por página. Mínimo: 1.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de cartões retornada com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardsPaginatedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisição inválida. Verifique os parâmetros enviados."
+          },
+          "401": {
+            "description": "Não autorizado. Token ausente, inválido ou expirado."
+          },
+          "500": {
+            "description": "Erro interno do servidor. Tente novamente com retry e backoff exponencial."
+          }
+        }
+      }
+    },
+    "/credit-cards/v1/{id}/block": {
+      "post": {
+        "tags": ["Cartões"],
+        "summary": "Bloquear Cartão",
+        "description": "Bloqueia um cartão corporativo pelo ID. Opcionalmente, informe o motivo do bloqueio no corpo da requisição.\n\n**Importante:** um cartão bloqueado pode ser desbloqueado posteriormente via endpoint de desbloqueio.",
+        "operationId": "blockCreditCard",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identificador único do cartão.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Motivo do bloqueio (opcional).",
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlockCardRequestBody"
+              },
+              "example": {
+                "reason": "Bloqueado pelo usuário via API"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Cartão bloqueado com sucesso."
+          },
+          "400": {
+            "description": "Requisição inválida. Verifique o ID do cartão e os parâmetros enviados."
+          },
+          "401": {
+            "description": "Não autorizado. Token ausente, inválido ou expirado."
+          },
+          "500": {
+            "description": "Erro interno do servidor. Tente novamente com retry e backoff exponencial."
+          }
+        }
+      }
+    },
+    "/credit-cards/v1/{id}/unblock": {
+      "post": {
+        "tags": ["Cartões"],
+        "summary": "Desbloquear Cartão",
+        "description": "Desbloqueia um cartão corporativo previamente bloqueado pelo ID.",
+        "operationId": "unblockCreditCard",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identificador único do cartão.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Cartão desbloqueado com sucesso."
+          },
+          "400": {
+            "description": "Requisição inválida. Verifique o ID do cartão."
+          },
+          "401": {
+            "description": "Não autorizado. Token ausente, inválido ou expirado."
+          },
+          "500": {
+            "description": "Erro interno do servidor. Tente novamente com retry e backoff exponencial."
+          }
+        }
+      }
+    },
+    "/statements/v1/credit-card": {
+      "get": {
+        "tags": ["Transações"],
+        "summary": "Extrato de Cartão",
+        "description": "Consulta o extrato de transações de cartão por período. Retorna uma lista paginada de transações com dados do cartão, categoria, centro de custo, status e anexos.\n\n**Regras:**\n- O período entre `startDate` e `endDate` não pode exceder **62 dias**.\n- O `limit` deve estar entre **5** e **100** itens por página.\n- Use `nextPageStartKey` para navegar entre páginas (paginação por cursor).",
+        "operationId": "getCreditCardStatement",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Número máximo de transações por página. Mínimo: 5, Máximo: 100.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 5,
+              "maximum": 100,
+              "example": 50
+            }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "description": "Data de início do período consultado (formato YYYY-MM-DD). O período não pode exceder 62 dias.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2025-09-01"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "description": "Data de fim do período consultado (formato YYYY-MM-DD). O período não pode exceder 62 dias.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2025-09-30"
+            }
+          },
+          {
+            "name": "types",
+            "in": "query",
+            "description": "Filtro opcional por tipo(s) de transação.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "PURCHASE",
+                  "PURCHASE_INTERNATIONAL",
+                  "PURCHASE_BNPL",
+                  "WITHDRAW",
+                  "WITHDRAW_INTERNATIONAL",
+                  "WITHDRAW_FUNDS",
+                  "BALANCE_INQUIRY",
+                  "PAYMENT_PLAN_INQUIRY",
+                  "REFUND",
+                  "REFUND_INTERNATIONAL",
+                  "REFUND_CREDIT_ADJUSTMENT",
+                  "REVERSAL_CREDIT_ADJUSTMENT",
+                  "REFUND_IOF",
+                  "REFUND_PURCHASE_BNPL",
+                  "IOF",
+                  "LIMIT",
+                  "LIMIT_CREDIT",
+                  "SUMMARY",
+                  "BILL_TARIFF",
+                  "REFUND_BILL_TARIFF",
+                  "INVOICE_PAYMENT"
+                ]
+              }
+            }
+          },
+          {
+            "name": "nextPageStartKey",
+            "in": "query",
+            "description": "Token opaco de paginação retornado na resposta anterior. Use exatamente como recebido para obter a próxima página.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Extrato retornado com sucesso. Contém a lista de transações e, opcionalmente, a chave para a próxima página.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardsTransactionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisição inválida. Verifique os parâmetros enviados (datas, limite, formato)."
+          },
+          "401": {
+            "description": "Não autorizado. Token ausente, inválido ou expirado."
+          },
+          "500": {
+            "description": "Erro interno do servidor. Tente novamente com retry e backoff exponencial."
+          }
+        }
+      }
+    },
+    "/attachments/v1/content/{attachmentId}": {
+      "get": {
+        "tags": ["Anexos"],
+        "summary": "Download de Anexo",
+        "description": "Faz o download do conteúdo binário de um anexo vinculado a uma transação. Os IDs dos anexos são retornados no array `attachments` de cada transação no endpoint de extrato.\n\n**Formatos suportados:**\n- `image/png` — Screenshots, fotos\n- `image/jpeg` — Fotos, recibos escaneados\n- `application/pdf` — Notas fiscais, documentos",
+        "operationId": "downloadAttachment",
+        "parameters": [
+          {
+            "name": "attachmentId",
+            "in": "path",
+            "description": "ID único do anexo, obtido no array `attachments` da resposta do extrato de cartão.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conteúdo binário do anexo. O formato é indicado pelo header `Content-Type` da resposta.",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado. Token ausente, inválido ou expirado."
+          },
+          "404": {
+            "description": "Anexo não encontrado. Verifique se o `attachmentId` está correto."
+          },
+          "500": {
+            "description": "Erro interno do servidor. Tente novamente com retry e backoff exponencial."
+          }
+        }
+      }
+    },
+    "/users/v1/users": {
+      "get": {
+        "tags": ["Usuários"],
+        "summary": "Listar Usuários",
+        "description": "Retorna a lista paginada de usuários da empresa, com filtro opcional por e-mail.\n\nUse `nextPageStartKey` para navegar entre páginas (paginação por cursor).",
+        "operationId": "listUsers",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "description": "Filtro por e-mail do usuário (correspondência exata).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "user@company.com"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Número máximo de usuários por página. Mínimo: 1, Máximo: 100.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "example": 20
+          },
+          {
+            "name": "nextPageStartKey",
+            "in": "query",
+            "description": "Token opaco de paginação retornado na resposta anterior. Use exatamente como recebido para obter a próxima página.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de usuários retornada com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListUsersResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisição inválida. Verifique os parâmetros enviados."
+          },
+          "401": {
+            "description": "Não autorizado. Token ausente, inválido ou expirado."
+          },
+          "500": {
+            "description": "Erro interno do servidor. Tente novamente com retry e backoff exponencial."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "OAuthTokenRequest": {
+        "type": "object",
+        "description": "Body da requisição de token. Credenciais (api_key e api_secret) são enviadas no header Authorization: Basic (base64 de api_key:api_secret).",
+        "required": ["grant_type"],
+        "properties": {
+          "grant_type": {
+            "type": "string",
+            "enum": ["client_credentials"],
+            "description": "Tipo de concessão OAuth 2.0. Sempre `client_credentials`.",
+            "example": "client_credentials"
+          }
+        }
+      },
+      "OAuthTokenResponse": {
+        "type": "object",
+        "description": "Resposta com o token de acesso JWT.",
+        "required": ["access_token", "token_type", "expires_in"],
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "Token JWT para autenticação nas chamadas à API. Inclua no header `Authorization: Bearer {token}`."
+          },
+          "token_type": {
+            "type": "string",
+            "enum": ["Bearer"],
+            "description": "Tipo do token. Sempre `Bearer`."
+          },
+          "expires_in": {
+            "type": "integer",
+            "description": "Tempo de vida do token em segundos. Padrão: 1800 (30 minutos).",
+            "example": 1800
+          }
+        }
+      },
+      "CardsTransactionRequest": {
+        "type": "object",
+        "description": "Parâmetros de consulta do extrato de cartão.",
+        "required": ["startDate", "endDate", "limit"],
+        "properties": {
+          "nextPageStartKey": {
+            "type": "string",
+            "description": "Token opaco de paginação retornado na resposta anterior. Use exatamente como recebido para obter a próxima página."
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2025-09-01",
+            "description": "Data de início do período consultado (formato YYYY-MM-DD). O período não pode exceder 62 dias."
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2025-09-30",
+            "description": "Data de fim do período consultado (formato YYYY-MM-DD). O período não pode exceder 62 dias."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 100,
+            "example": 50,
+            "description": "Número máximo de transações por página. Mínimo: 5, Máximo: 100."
+          },
+          "types": {
+            "type": "array",
+            "description": "Filtro opcional por tipo(s) de transação.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "PURCHASE",
+                "PURCHASE_INTERNATIONAL",
+                "PURCHASE_BNPL",
+                "WITHDRAW",
+                "WITHDRAW_INTERNATIONAL",
+                "WITHDRAW_FUNDS",
+                "BALANCE_INQUIRY",
+                "PAYMENT_PLAN_INQUIRY",
+                "REFUND",
+                "REFUND_INTERNATIONAL",
+                "REFUND_CREDIT_ADJUSTMENT",
+                "REVERSAL_CREDIT_ADJUSTMENT",
+                "REFUND_IOF",
+                "REFUND_PURCHASE_BNPL",
+                "IOF",
+                "LIMIT",
+                "LIMIT_CREDIT",
+                "SUMMARY",
+                "BILL_TARIFF",
+                "REFUND_BILL_TARIFF",
+                "INVOICE_PAYMENT"
+              ]
+            }
+          }
+        }
+      },
+      "Card": {
+        "type": "object",
+        "description": "Dados do cartão associado à transação.",
+        "required": [
+          "id",
+          "maskedNumber",
+          "responsibleEmail",
+          "responsibleName",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador único do cartão."
+          },
+          "maskedNumber": {
+            "type": "string",
+            "description": "Número do cartão mascarado (ex: **** **** **** 1234)."
+          },
+          "responsibleName": {
+            "type": "string",
+            "description": "Nome do responsável pelo cartão."
+          },
+          "responsibleEmail": {
+            "type": "string",
+            "description": "E-mail do responsável pelo cartão."
+          },
+          "type": {
+            "type": "string",
+            "description": "Tipo do cartão.",
+            "enum": ["VIRTUAL", "PHYSICAL"]
+          }
+        }
+      },
+      "Category": {
+        "type": "object",
+        "description": "Categoria de despesa associada à transação.",
+        "required": ["id", "name"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador único da categoria."
+          },
+          "name": {
+            "type": "string",
+            "description": "Nome da categoria (ex: Alimentação, Transporte)."
+          }
+        }
+      },
+      "CostCenter": {
+        "type": "object",
+        "description": "Centro de custo associado à transação.",
+        "required": ["id", "name"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador único do centro de custo."
+          },
+          "name": {
+            "type": "string",
+            "description": "Nome do centro de custo."
+          }
+        }
+      },
+      "Link": {
+        "type": "object",
+        "description": "Link HATEOAS para recurso relacionado.",
+        "required": ["href", "rel"],
+        "properties": {
+          "href": {
+            "type": "string",
+            "example": "/attachments/v1/content/{id}",
+            "description": "URL relativa do recurso vinculado."
+          },
+          "rel": {
+            "type": "string",
+            "example": "GET",
+            "description": "Método HTTP para acessar o recurso."
+          }
+        }
+      },
+      "AttachmentLinks": {
+        "type": "object",
+        "description": "Links para download do conteúdo do anexo.",
+        "required": ["content"],
+        "properties": {
+          "content": {
+            "$ref": "#/components/schemas/Link"
+          }
+        }
+      },
+      "Attachment": {
+        "type": "object",
+        "description": "Anexo vinculado a uma transação (comprovante, nota fiscal, recibo).",
+        "required": ["id", "name"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador único do anexo. Use este ID no endpoint GET /attachments/v1/content/{attachmentId} para download."
+          },
+          "name": {
+            "type": "string",
+            "description": "Nome do arquivo do anexo."
+          },
+          "_links": {
+            "$ref": "#/components/schemas/AttachmentLinks"
+          }
+        }
+      },
+      "CardTransaction": {
+        "type": "object",
+        "description": "Transação de cartão com todos os dados associados.",
+        "required": [
+          "amountBrl",
+          "attachments",
+          "card",
+          "category",
+          "costCenter",
+          "exchangeRateUsd",
+          "id",
+          "installment",
+          "isCanceled",
+          "isConciled",
+          "merchant",
+          "operation",
+          "status",
+          "transactionDate",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador único da transação."
+          },
+          "operation": {
+            "type": "string",
+            "description": "Tipo de operação da transação.",
+            "enum": ["CASH_IN", "CASH_OUT"]
+          },
+          "transactionDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora da transação (ISO 8601).",
+            "example": "2025-09-15T14:30:00.000Z"
+          },
+          "status": {
+            "type": "string",
+            "description": "Status atual da transação.",
+            "enum": ["PENDING", "PROCESSED", "CANCELED"]
+          },
+          "isCanceled": {
+            "type": "boolean",
+            "description": "Indica se a transação foi cancelada."
+          },
+          "type": {
+            "type": "string",
+            "description": "Tipo detalhado da transação.",
+            "enum": [
+              "PURCHASE",
+              "PURCHASE_INTERNATIONAL",
+              "PURCHASE_BNPL",
+              "WITHDRAW",
+              "WITHDRAW_INTERNATIONAL",
+              "WITHDRAW_FUNDS",
+              "BALANCE_INQUIRY",
+              "PAYMENT_PLAN_INQUIRY",
+              "REFUND",
+              "REFUND_INTERNATIONAL",
+              "REFUND_CREDIT_ADJUSTMENT",
+              "REVERSAL_CREDIT_ADJUSTMENT",
+              "REFUND_IOF",
+              "REFUND_PURCHASE_BNPL",
+              "IOF",
+              "LIMIT",
+              "LIMIT_CREDIT",
+              "SUMMARY",
+              "BILL_TARIFF",
+              "REFUND_BILL_TARIFF",
+              "INVOICE_PAYMENT"
+            ]
+          },
+          "merchant": {
+            "type": "string",
+            "description": "Nome do estabelecimento onde a transação foi realizada."
+          },
+          "amountBrl": {
+            "type": "number",
+            "description": "Valor da transação em Reais (BRL).",
+            "example": 150.75
+          },
+          "exchangeRateUsd": {
+            "type": "number",
+            "description": "Taxa de câmbio em dólar (USD). Presente em transações internacionais — use apenas como referência para auditoria.",
+            "example": 5.12
+          },
+          "card": {
+            "$ref": "#/components/schemas/Card"
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "costCenter": {
+            "$ref": "#/components/schemas/CostCenter"
+          },
+          "isConciled": {
+            "type": "boolean",
+            "description": "Indica se a transação foi conciliada."
+          },
+          "installment": {
+            "type": "number",
+            "description": "Número da parcela (para compras parceladas).",
+            "example": 1
+          },
+          "attachments": {
+            "type": "array",
+            "description": "Lista de anexos vinculados à transação (comprovantes, notas fiscais, recibos).",
+            "items": {
+              "$ref": "#/components/schemas/Attachment"
+            }
+          }
+        }
+      },
+      "CardsTransactionResponse": {
+        "type": "object",
+        "description": "Resposta paginada do extrato de cartão.",
+        "required": ["transactions"],
+        "properties": {
+          "transactions": {
+            "type": "array",
+            "description": "Lista de transações do período consultado.",
+            "items": {
+              "$ref": "#/components/schemas/CardTransaction"
+            }
+          },
+          "nextPageStartKey": {
+            "type": "string",
+            "description": "Token opaco para a próxima página. Se ausente, não há mais páginas. Use este valor no campo `nextPageStartKey` da próxima requisição."
+          }
+        }
+      },
+      "CardResponsible": {
+        "type": "object",
+        "description": "Dados do responsável pelo cartão.",
+        "required": ["email"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nome do responsável pelo cartão."
+          },
+          "email": {
+            "type": "string",
+            "description": "E-mail do responsável pelo cartão."
+          }
+        }
+      },
+      "CardDetailed": {
+        "type": "object",
+        "description": "Dados completos de um cartão corporativo.",
+        "required": [
+          "id",
+          "maskedNumber",
+          "cardHolderName",
+          "responsible",
+          "type",
+          "createdAt",
+          "updatedAt",
+          "status",
+          "expirationDate",
+          "name",
+          "costCenter",
+          "formattedExpirationDate",
+          "purpose"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador único do cartão."
+          },
+          "maskedNumber": {
+            "type": "string",
+            "description": "Número do cartão mascarado (ex: **** **** **** 1234)."
+          },
+          "cardHolderName": {
+            "type": "string",
+            "description": "Nome do portador do cartão."
+          },
+          "responsible": {
+            "$ref": "#/components/schemas/CardResponsible"
+          },
+          "type": {
+            "type": "string",
+            "description": "Tipo do cartão.",
+            "enum": ["PHYSICAL", "VIRTUAL"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data de criação do cartão (ISO 8601).",
+            "example": "2025-09-15T14:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data da última atualização do cartão (ISO 8601).",
+            "example": "2025-09-20T10:00:00.000Z"
+          },
+          "status": {
+            "type": "string",
+            "description": "Status atual do cartão.",
+            "enum": ["ACTIVATED", "BLOCKED", "CANCELLED", "INACTIVATED"]
+          },
+          "expirationDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data de expiração do cartão (ISO 8601).",
+            "example": "2028-12-31T23:59:59.000Z"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nome atribuído ao cartão."
+          },
+          "costCenter": {
+            "$ref": "#/components/schemas/CostCenter"
+          },
+          "formattedExpirationDate": {
+            "type": "string",
+            "description": "Data de expiração formatada (MM/YYYY).",
+            "example": "12/2028"
+          },
+          "purpose": {
+            "type": "string",
+            "description": "Finalidade do cartão.",
+            "enum": ["FREE", "TRIP", "ADS", "SOFTWARE", "AERIAL", "HOTEL"]
+          }
+        }
+      },
+      "CardsPaginatedResponse": {
+        "type": "object",
+        "description": "Resposta paginada da listagem de cartões.",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "Lista de cartões.",
+            "items": {
+              "$ref": "#/components/schemas/CardDetailed"
+            }
+          },
+          "nextPageStartKey": {
+            "type": "string",
+            "description": "Token opaco para a próxima página. Se ausente, não há mais páginas. Use este valor no campo `nextPageStartKey` da próxima requisição.",
+            "example": "eyJvZmZzZXQiOjB9"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Número de itens por página.",
+            "example": 10
+          }
+        }
+      },
+      "BlockCardRequestBody": {
+        "type": "object",
+        "description": "Corpo da requisição de bloqueio de cartão.",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Motivo do bloqueio do cartão.",
+            "example": "Bloqueado pelo usuário via API"
+          }
+        }
+      },
+      "RoleDto": {
+        "type": "object",
+        "description": "Papel (role) atribuído ao usuário na empresa.",
+        "required": ["id", "name"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador único do papel."
+          },
+          "name": {
+            "type": "string",
+            "description": "Nome do papel (ex: Contador(a), Administrador).",
+            "example": "Contador(a)"
+          }
+        }
+      },
+      "UserDto": {
+        "type": "object",
+        "description": "Dados de um usuário da empresa.",
+        "required": ["id", "email", "name", "role", "active"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador único do usuário."
+          },
+          "email": {
+            "type": "string",
+            "description": "E-mail do usuário.",
+            "example": "user@company.com"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nome do usuário.",
+            "example": "João Silva"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Telefone do usuário.",
+            "example": "11999999999"
+          },
+          "role": {
+            "$ref": "#/components/schemas/RoleDto"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Indica se o usuário está ativo na empresa.",
+            "example": true
+          }
+        }
+      },
+      "ListUsersResponse": {
+        "type": "object",
+        "description": "Resposta paginada da listagem de usuários.",
+        "required": ["data"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Lista de usuários.",
+            "items": {
+              "$ref": "#/components/schemas/UserDto"
+            }
+          },
+          "nextPageStartKey": {
+            "type": "string",
+            "description": "Token opaco para a próxima página. Se ausente, não há mais páginas. Use este valor no parâmetro `nextPageStartKey` da próxima requisição."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Número de itens por página.",
+            "example": 20
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "API Key e API Secret no formato api_key:api_secret, encodados em base64. Header: Authorization: Basic {base64(api_key:api_secret)}"
+      },
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Token Bearer obtido via OAuth 2.0 Client Credentials. Formato: `Bearer {token}`"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearer": []
+    }
+  ]
+}
